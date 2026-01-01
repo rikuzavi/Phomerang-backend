@@ -1,7 +1,26 @@
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
+import Cors from "cors";
+
+// Initializing the cors middleware
+const cors = Cors({
+  origin: "*" // allow all origins, or put your GitHub Pages URL
+});
+
+// Helper to wait for middleware
+function runMiddleware(req, res, fn) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) reject(result)
+      else resolve(result)
+    });
+  });
+}
 
 export default async function handler(req, res) {
+  // Run CORS
+  await runMiddleware(req, res, cors);
+
   try {
     if (req.method !== "POST")
       return res.status(405).json({ message: "Only POST allowed" });
@@ -17,7 +36,6 @@ export default async function handler(req, res) {
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-
     await page.waitForSelector("#crop-container", { visible: true });
 
     const element = await page.$("#crop-container");
