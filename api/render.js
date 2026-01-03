@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     const box = await element.boundingBox();
 
     // 🔧 TINY SAFE TRIM (adjust if needed)
-    const TRIM = 4; // px
+    const TRIM = 8; // px
 
     const buffer = await page.screenshot({
       type: "png",
@@ -59,4 +59,5 @@ export default async function handler(req, res) {
     res.status(500).send("Render failed");
   }
 }
+
 
