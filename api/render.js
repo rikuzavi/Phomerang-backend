@@ -17,9 +17,8 @@ export default async function handler(req, res) {
   await runMiddleware(req, res, cors);
 
   try {
-    if (req.method !== "POST") {
+    if (req.method !== "POST")
       return res.status(405).json({ message: "Only POST allowed" });
-    }
 
     const { html } = req.body;
 
@@ -32,24 +31,20 @@ export default async function handler(req, res) {
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-    await page.waitForSelector("#imgdiv");
 
-    const clip = await page.evaluate(() => {
-      const el = document.getElementById("imgdiv");
-      const rect = el.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
+    await page.waitForSelector("#imgdiv", { visible: true });
 
-      return {
-        x: Math.floor(rect.left * dpr),
-        y: Math.floor(rect.top * dpr),
-        width: Math.ceil(rect.width * dpr),
-        height: Math.ceil(rect.height * dpr),
-      };
-    });
+    const element = await page.$("#imgdiv");
+    const box = await element.boundingBox();
 
     const buffer = await page.screenshot({
       type: "png",
-      clip,
+      clip: {
+        x: Math.round(box.x),
+        y: Math.round(box.y),
+        width: Math.round(box.width),
+        height: Math.round(box.height),
+      },
     });
 
     await browser.close();
