@@ -2,23 +2,18 @@ import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import Cors from "cors";
 
-// Initializing the cors middleware
-const cors = Cors({
-  origin: "*" // allow all origins, or put your GitHub Pages URL
-});
+const cors = Cors({ origin: "*" });
 
-// Helper to wait for middleware
 function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result) => {
-      if (result instanceof Error) reject(result)
-      else resolve(result)
+      if (result instanceof Error) reject(result);
+      else resolve(result);
     });
   });
 }
 
 export default async function handler(req, res) {
-  // Run CORS
   await runMiddleware(req, res, cors);
 
   try {
@@ -29,8 +24,8 @@ export default async function handler(req, res) {
 
     const browser = await puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
+      defaultViewport: chromium.defaultViewport,
       headless: true,
     });
 
@@ -39,12 +34,24 @@ export default async function handler(req, res) {
     await page.waitForSelector("#imgdiv", { visible: true });
 
     const element = await page.$("#imgdiv");
-    const buffer = await element.screenshot({ type: "png" });
+    const box = await element.boundingBox();
+
+    // 🔧 TINY SAFE TRIM (adjust if needed)
+    const TRIM = 2; // px
+
+    const buffer = await page.screenshot({
+      type: "png",
+      clip: {
+        x: Math.round(box.x) + TRIM,
+        y: Math.round(box.y) + TRIM,
+        width: Math.round(box.width) - TRIM * 2,
+        height: Math.round(box.height) - TRIM * 2,
+      },
+    });
 
     await browser.close();
 
     res.setHeader("Content-Type", "image/png");
-    res.setHeader("Content-Disposition", "attachment; filename=edited.png");
     res.send(buffer);
 
   } catch (err) {
@@ -52,5 +59,3 @@ export default async function handler(req, res) {
     res.status(500).send("Render failed");
   }
 }
-
-
