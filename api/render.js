@@ -2,44 +2,57 @@ import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import Cors from "cors";
 
-// Initializing the cors middleware
-const cors = Cors({
-  origin: "*" // allow all origins, or put your GitHub Pages URL
-});
+// CORS
+const cors = Cors({ origin: "*" });
 
-// Helper to wait for middleware
 function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result) => {
-      if (result instanceof Error) reject(result)
-      else resolve(result)
+      if (result instanceof Error) reject(result);
+      else resolve(result);
     });
   });
 }
 
 export default async function handler(req, res) {
-  // Run CORS
   await runMiddleware(req, res, cors);
 
   try {
-    if (req.method !== "POST")
+    if (req.method !== "POST") {
       return res.status(405).json({ message: "Only POST allowed" });
+    }
 
     const { html } = req.body;
 
     const browser = await puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
+      defaultViewport: chromium.defaultViewport,
       headless: true,
     });
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-    await page.waitForSelector("#imgdiv", { visible: true });
 
-    const element = await page.$("#imgdiv");
-    const buffer = await element.screenshot({ type: "png" });
+    await page.waitForSelector("#imgdiv");
+
+    // 🔥 GET ONLY VISIBLE PART
+    const clip = await page.evaluate(() => {
+      const el = document.getElementById("imgdiv");
+      const rect = el.getBoundingClientRect();
+
+      return {
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+    });
+
+    const buffer = await page.screenshot({
+      type: "png",
+      clip,
+    });
 
     await browser.close();
 
@@ -52,4 +65,3 @@ export default async function handler(req, res) {
     res.status(500).send("Render failed");
   }
 }
-
