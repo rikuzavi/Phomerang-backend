@@ -2,7 +2,6 @@ import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import Cors from "cors";
 
-// CORS
 const cors = Cors({ origin: "*" });
 
 function runMiddleware(req, res, fn) {
@@ -33,19 +32,18 @@ export default async function handler(req, res) {
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-
     await page.waitForSelector("#imgdiv");
 
-    // 🔥 GET ONLY VISIBLE PART
     const clip = await page.evaluate(() => {
       const el = document.getElementById("imgdiv");
       const rect = el.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
 
       return {
-        x: rect.left,
-        y: rect.top,
-        width: rect.width,
-        height: rect.height,
+        x: Math.floor(rect.left * dpr),
+        y: Math.floor(rect.top * dpr),
+        width: Math.ceil(rect.width * dpr),
+        height: Math.ceil(rect.height * dpr),
       };
     });
 
@@ -57,7 +55,6 @@ export default async function handler(req, res) {
     await browser.close();
 
     res.setHeader("Content-Type", "image/png");
-    res.setHeader("Content-Disposition", "attachment; filename=edited.png");
     res.send(buffer);
 
   } catch (err) {
