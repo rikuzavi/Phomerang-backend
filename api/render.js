@@ -36,9 +36,9 @@ export default async function handler(req, res) {
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-    await page.waitForSelector("#crop-container", { visible: true });
+    await page.waitForSelector("#imgdiv", { visible: true });
 
-    const element = await page.$("#crop-container");
+    const element = await page.$("#imgdiv");
     const buffer = await element.screenshot({ type: "png" });
 
     await browser.close();
@@ -52,3 +52,4 @@ export default async function handler(req, res) {
     res.status(500).send("Render failed");
   }
 }
+
