@@ -41,9 +41,9 @@ export default async function handler(req, res) {
       type: "png",
       clip: {
         x: Math.round(box.x) + 2,
-        y: Math.round(box.y) + 5,
+        y: Math.round(box.y) - 2,
         width: Math.round(box.width) + 2,
-        height: Math.round(box.height) + 5,
+        height: Math.round(box.height),
       },
     });
 
@@ -57,5 +57,6 @@ export default async function handler(req, res) {
     res.status(500).send("Render failed");
   }
 }
+
 
 
