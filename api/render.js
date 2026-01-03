@@ -2,18 +2,23 @@ import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import Cors from "cors";
 
-const cors = Cors({ origin: "*" });
+// Initializing the cors middleware
+const cors = Cors({
+  origin: "*" // allow all origins, or put your GitHub Pages URL
+});
 
+// Helper to wait for middleware
 function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result) => {
-      if (result instanceof Error) reject(result);
-      else resolve(result);
+      if (result instanceof Error) reject(result)
+      else resolve(result)
     });
   });
 }
 
 export default async function handler(req, res) {
+  // Run CORS
   await runMiddleware(req, res, cors);
 
   try {
@@ -24,32 +29,22 @@ export default async function handler(req, res) {
 
     const browser = await puppeteer.launch({
       args: chromium.args,
-      executablePath: await chromium.executablePath(),
       defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
       headless: true,
     });
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-
     await page.waitForSelector("#imgdiv", { visible: true });
 
     const element = await page.$("#imgdiv");
-    const box = await element.boundingBox();
-
-    const buffer = await page.screenshot({
-      type: "png",
-      clip: {
-        x: Math.round(box.x) + 2,
-        y: Math.round(box.y) - 2,
-        width: Math.round(box.width) + 2,
-        height: Math.round(box.height),
-      },
-    });
+    const buffer = await element.screenshot({ type: "png" });
 
     await browser.close();
 
     res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Disposition", "attachment; filename=edited.png");
     res.send(buffer);
 
   } catch (err) {
@@ -57,6 +52,5 @@ export default async function handler(req, res) {
     res.status(500).send("Render failed");
   }
 }
-
 
 
