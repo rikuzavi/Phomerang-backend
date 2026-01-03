@@ -40,10 +40,10 @@ export default async function handler(req, res) {
     const buffer = await page.screenshot({
       type: "png",
       clip: {
-        x: Math.round(box.x),
-        y: Math.round(box.y),
-        width: Math.round(box.width),
-        height: Math.round(box.height),
+        x: Math.round(box.x) + 2,
+        y: Math.round(box.y) + 2,
+        width: Math.round(box.width) + 2,
+        height: Math.round(box.height) + 2,
       },
     });
 
@@ -57,3 +57,4 @@ export default async function handler(req, res) {
     res.status(500).send("Render failed");
   }
 }
+
