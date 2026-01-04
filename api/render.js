@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       type: "png",
       clip: {
         x: Math.round(box.x) + TRIM,
-        y: Math.round(box.y) + TRIM * 2,
+        y: Math.round(box.y) + TRIM,
         width: Math.round(box.width) - TRIM * 2,
         height: Math.round(box.height) - TRIM * 2,
       },
@@ -59,6 +59,7 @@ export default async function handler(req, res) {
     res.status(500).send("Render failed");
   }
 }
+
 
 
 
